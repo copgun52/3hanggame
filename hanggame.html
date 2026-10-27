@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>삼행시 대결</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 폰 한 대에 한 줄기 세로 칼럼. 방장은 코발트, 참가자는 로즈. 형광펜 노랑은 삼행시의 첫 글자에만 쓴다. */
+:root{
+  --bg:#eceef6; --surface:#ffffff; --surface-2:#dfe2f1; --fg:#14172b; --fg-dim:#555a78;
+  --edge:#14172b; --shade:#14172b;
+  --p1:#3157f5; --p1-ink:#ffffff; --p1-soft:#dfe5ff;
+  --p2:#d92b55; --p2-ink:#ffffff; --p2-soft:#ffe1e9;
+  --hi:#ffd84a; --hi-ink:#14172b; --warn:#a34a00;
+  --font-display:'Black Han Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --font-body:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1120; --surface:#1a1d33; --surface-2:#262a4b; --fg:#eef0ff; --fg-dim:#a2a8cc;
+    --edge:#8d95d6; --shade:#05060f;
+    --p1:#6f8bff; --p1-ink:#0f1120; --p1-soft:#232c63;
+    --p2:#ff6b8b; --p2-ink:#0f1120; --p2-soft:#4a1f33;
+    --hi:#ffd84a; --hi-ink:#14172b; --warn:#ffb347;
+    color-scheme:dark;
+  }
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.6;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pc,var(--p1));outline-offset:3px}
+[data-focus]:focus{outline:none}
+
+.is-p1{--pc:var(--p1);--pc-ink:var(--p1-ink);--pc-soft:var(--p1-soft)}
+.is-p2{--pc:var(--p2);--pc-ink:var(--p2-ink);--pc-soft:var(--p2-soft)}
+.is-ink{--pc:var(--fg);--pc-ink:var(--bg);--pc-soft:var(--surface-2)}
+
+.shell{
+  width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
+  padding-block:16px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+#app{display:flex;flex-direction:column;gap:18px;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px}
+.brand{font-family:var(--font-display);font-size:19px;letter-spacing:.02em}
+.brand span{background:var(--hi);color:var(--hi-ink);padding:0 6px;border-radius:5px}
+.link{background:none;border:0;color:var(--fg-dim);text-decoration:underline;cursor:pointer;padding:8px;min-height:40px}
+.quit{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:3px solid var(--edge);border-radius:16px;background:var(--surface)}
+.quit span{min-width:0;font-size:15px}
+.qb{display:flex;gap:8px}
+
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(44px,13vw,68px);line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1.2;margin:0;text-wrap:balance}
+.verdict{font-size:clamp(38px,12vw,60px);line-height:1.1}
+.kicker{margin:0;font-size:14px;letter-spacing:.08em;color:var(--fg-dim)}
+.lede{margin:0;font-size:18px;max-width:34em}
+.hint{margin:0;font-size:15px;color:var(--fg-dim)}
+.code-inline{font-family:var(--font-display);letter-spacing:.06em}
+
+.btn{
+  width:100%;min-height:56px;padding:12px 20px;cursor:pointer;
+  font-family:var(--font-display);font-size:20px;letter-spacing:.01em;
+  background:var(--surface);color:var(--fg);
+  border:3px solid var(--edge);border-radius:16px;box-shadow:0 5px 0 var(--shade);
+  transition:transform .08s ease,box-shadow .08s ease;
+}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--shade)}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none}
+.btn-ink{background:var(--fg);color:var(--bg)}
+.btn-pc{background:var(--pc);color:var(--pc-ink)}
+.btn-ghost{font-family:var(--font-body);font-size:16px;min-height:48px;box-shadow:0 3px 0 var(--shade)}
+.btn-s{width:auto;min-height:40px;padding:6px 14px;font-size:15px;box-shadow:0 3px 0 var(--shade)}
+
+.card{background:var(--surface);border:3px solid var(--edge);border-radius:20px;padding:18px;box-shadow:0 6px 0 var(--shade);display:flex;flex-direction:column;gap:18px;min-width:0}
+.card h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:22px}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend,.field label{display:flex;align-items:center;padding:0;margin-bottom:8px;font-size:14px;letter-spacing:.04em;color:var(--fg-dim)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc,var(--fg));margin-right:8px;flex:none}
+.inp{
+  width:100%;min-width:0;padding:13px 14px;font-size:18px;line-height:1.4;
+  background:var(--surface);color:var(--fg);border:2px solid var(--edge);border-radius:14px;
+}
+.inp::placeholder{color:var(--fg-dim);opacity:.8}
+textarea.inp{resize:vertical;line-height:1.6}
+.codein{text-align:center;font-family:var(--font-display);font-size:30px;letter-spacing:.2em;text-transform:uppercase}
+.seg{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label{display:grid;place-items:center;min-height:48px;margin:0;border:2px solid var(--edge);border-radius:12px;background:var(--surface);cursor:pointer;color:var(--fg);font-size:16px;letter-spacing:0}
+.seg input:checked + label{background:var(--fg);color:var(--bg)}
+.seg input:focus-visible + label{outline:3px solid var(--p1);outline-offset:2px}
+
+.board{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;border:3px solid var(--edge);border-radius:18px;overflow:hidden;box-shadow:0 5px 0 var(--shade);background:var(--surface)}
+.side{display:flex;align-items:center;gap:12px;padding:10px 14px;min-width:0}
+.side.s1{background:var(--p1);color:var(--p1-ink)}
+.side.s2{background:var(--p2);color:var(--p2-ink);justify-content:flex-end}
+.side .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side .n{font-family:var(--font-display);font-size:32px;line-height:1}
+.mid{display:grid;place-items:center;padding:6px 12px;font-size:12px;line-height:1.3;color:var(--fg-dim);text-align:center}
+.mid .rn{font-family:var(--font-display);font-size:19px;color:var(--fg);font-variant-numeric:tabular-nums}
+
+.roomcode{
+  font-family:var(--font-display);font-size:clamp(48px,16vw,84px);line-height:1.1;letter-spacing:.14em;text-align:center;
+  padding:10px 0 10px .14em;background:var(--hi);color:var(--hi-ink);
+  border:3px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 var(--shade);
+}
+.plist{display:flex;flex-direction:column;gap:10px}
+.pl{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--edge);border-radius:14px;background:var(--surface);min-width:0}
+.pl.wait{color:var(--fg-dim);border-style:dashed}
+.pl .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .tag{margin-left:auto;font-size:13px;color:var(--fg-dim);flex:none}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{
+  display:grid;place-items:center;aspect-ratio:1;
+  background:var(--hi);color:var(--hi-ink);border:3px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 var(--shade);
+  font-family:var(--font-display);font-size:clamp(56px,22vw,112px);line-height:1;
+  animation:drop .5s cubic-bezier(.2,.9,.3,1.25) both;animation-delay:calc(var(--i,0) * 90ms);
+}
+.tile-s{width:56px;height:56px;flex:none;aspect-ratio:auto;font-size:30px;border-radius:12px;border-width:2px;box-shadow:0 3px 0 var(--shade);animation:none}
+@keyframes drop{from{transform:translateY(-16px) rotate(-5deg);opacity:0}to{transform:none;opacity:1}}
+
+.poem{background:var(--surface);border:3px solid var(--edge);border-radius:18px;overflow:hidden;box-shadow:0 5px 0 var(--shade)}
+.poem-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;background:var(--pc);color:var(--pc-ink)}
+.poem-h .who{font-family:var(--font-display);font-size:19px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.poem-h .wd{font-size:14px;flex:none}
+.poem ol{list-style:none;margin:0;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.poem li{font-size:19px;line-height:1.65;overflow-wrap:anywhere}
+.poem li.empty{color:var(--fg-dim)}
+.poem mark{background:var(--hi);color:var(--hi-ink);font-family:var(--font-display);padding:0 .14em;margin-right:1px;border-radius:5px}
+
+.whead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.chip{font-family:var(--font-display);font-size:20px;background:var(--pc);color:var(--pc-ink);padding:6px 16px;border-radius:99px;border:2px solid var(--edge);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.secs{font-family:var(--font-display);font-size:48px;line-height:1;font-variant-numeric:tabular-nums}
+.track{height:14px;border:2px solid var(--edge);border-radius:99px;background:var(--surface);overflow:hidden}
+.fill{height:100%;background:var(--pc);transform-origin:left center}
+.low .secs{color:var(--warn);animation:beat 1s ease-in-out infinite}
+.low .fill{background:var(--warn)}
+@keyframes beat{50%{transform:scale(1.12)}}
+.row{display:flex;align-items:center;gap:10px}
+.err{margin:0;min-height:1.4em;color:var(--warn);font-size:15px}
+
+.rate{background:var(--surface);border:3px solid var(--edge);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 5px 0 var(--shade);min-width:0}
+.rl{margin:0;display:flex;align-items:center;font-size:15px}
+.stars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sc{display:grid;gap:2px;place-items:center;align-content:center;min-height:66px;padding:6px 2px;cursor:pointer;background:var(--bg);border:2px solid var(--edge);border-radius:12px}
+.sc .num{font-family:var(--font-display);font-size:24px;line-height:1}
+.sc .lab{font-size:11px;line-height:1.2;color:var(--fg-dim)}
+.sc:hover{background:var(--pc-soft)}
+.sc:active{background:var(--pc);color:var(--pc-ink)}
+.sc:active .lab{color:var(--pc-ink)}
+.done{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.done span{display:flex;align-items:center;min-width:0}
+
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:6px}
+.sbox{display:grid;gap:2px;padding:14px 10px;text-align:center;background:var(--pc);color:var(--pc-ink);border:3px solid var(--edge);border-radius:18px;box-shadow:0 5px 0 var(--shade);min-width:0}
+.sbox.win{transform:translateY(-6px);box-shadow:0 11px 0 var(--shade)}
+.sbox .sn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbox .big{font-family:var(--font-display);font-size:64px;line-height:1.05}
+.sbox .sl{font-size:14px}
+.hround h3{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--font-display);font-weight:400;font-size:22px}
+.hround h3 span{font-family:var(--font-body);font-size:15px;color:var(--fg-dim)}
+
+.setup ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.setup code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--surface-2);padding:1px 6px;border-radius:6px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:20;max-width:calc(100vw - 32px);padding:12px 18px;border-radius:99px;background:var(--fg);color:var(--bg);font-size:15px;text-align:center}
+
+@media (prefers-reduced-motion: reduce){
+  .tile{animation:none}
+  .low .secs{animation:none}
+  .btn{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="top">
+    <span class="brand"><span>삼행시</span> 대결</span>
+    <button class="link" id="quitBtn" type="button" hidden>방 나가기</button>
+  </div>
+  <div class="quit" id="quit" hidden>
+    <span>방에서 나갈까요? 나가면 상대의 게임도 끝나요.</span>
+    <div class="qb">
+      <button class="btn btn-ghost btn-s" id="quitYes" type="button">나가기</button>
+      <button class="btn btn-ghost btn-s" id="quitNo" type="button">계속하기</button>
+    </div>
+  </div>
+  <main id="app"></main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
+  arrayUnion, deleteField, Timestamp
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+/* ================================================================
+   1) 여기에 Firebase 설정을 붙여넣으세요. (README.md 의 4단계)
+   ================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyC21V9M5qBmQsypkTC-wW9R77XwMZDgGdY",
+  authDomain: "hanggmae.firebaseapp.com",
+  projectId: "hanggmae",
+  storageBucket: "hanggmae.firebasestorage.app",
+  messagingSenderId: "789446612937",
+  appId: "1:789446612937:web:fea011d566c1882a21ba18"
+};
+/* ================================================================ */
+
+const configured = !/붙여넣기/.test(firebaseConfig.apiKey || '') && !/붙여넣기/.test(firebaseConfig.projectId || '');
+
+const WORDS = Array.from(new Set([
+  '짜장면','삼겹살','고구마','감자탕','마라탕','탕후루','붕어빵','순대국','토마토','바나나','핫도그','햄버거','딸기잼','김밥집','치킨집','아이스','닭갈비','떡볶이',
+  '월요일','금요일','출근길','퇴근길','지하철','에어컨','선풍기','냉장고','세탁기','청소기','휴대폰','충전기','이어폰','도서관','편의점','놀이터','운동장','목욕탕','찜질방','노래방','영화관','만화책','컴퓨터','키보드','노트북','자전거','비행기','기차역','월급날','보너스','휴가철','생일날','첫사랑','짝사랑','소확행','장마철',
+  '무지개','보름달','은하수','북극성','소나기','눈사람','벚꽃길','단풍잎','민들레','선인장','강아지','고양이','다람쥐','코끼리','호랑이','거북이','두루미',
+  '신호등','가로등','골목길','정류장','건널목','한강변','공원길','지하도','전망대','아파트','광화문','빌딩숲'
+].filter(w => /^[가-힣]{3}$/.test(w))));
+const LABELS = ['별로','낫뱉','웃김','빵터짐','goat'];
+const SAMPLE = [
+  { s:'삼', t:'키지 못한 웃음이' },
+  { s:'행', t:'복하게 터져 나와서' },
+  { s:'시', t:'작도 전에 이겨 버렸다' }
+];
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const K_NAME = 'samhaengsi-online-name', K_ROOM = 'samhaengsi-online-room', K_SET = 'samhaengsi-online-set';
+
+const $ = (s, r = document) => r.querySelector(s);
+const app = $('#app'), quitBox = $('#quit'), quitBtn = $('#quitBtn'), toast = $('#toast');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const normCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+
+const S = {
+  uid: '', code: '', me: 0, room: null, key: '', unsub: null, timer: 0,
+  adv: '', forced: '', wsRound: 0, writeStart: 0, focusRate: false,
+  beat: { v: null, at: 0 }, lastPhase: '', lastTick: 0, hb: 0
+};
+const BEAT_MS = 10000, GONE_MS = 45000;
+let db = null, auth = null;
+const roomRef = () => doc(db, 'rooms', S.code);
+
+/* ---------- 공통 도우미 ---------- */
+let toastTimer = 0;
+function say(msg){
+  toast.textContent = msg; toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 2800);
+}
+function put(html){
+  clearInterval(S.timer);
+  app.innerHTML = html;
+  quitBtn.hidden = !S.code;
+  quitBox.hidden = true;
+  try { window.scrollTo(0, 0); } catch (e) {}
+  const f = app.querySelector('[data-focus]');
+  if (f) f.focus({ preventScroll: true });
+}
+function setIf(el, html){
+  if (!el) return false;
+  if (el.__h === html) return false;
+  el.__h = html; el.innerHTML = html;
+  return true;
+}
+function errText(e){
+  const c = (e && (e.code || e.message)) || '';
+  if (c === 'nf') return '그 코드의 방을 찾을 수 없어요. 코드를 다시 확인해 주세요.';
+  if (c === 'full') return '이미 두 명이 들어와 있는 방이에요.';
+  if (c === 'ended') return '상대가 나가서 끝난 방이에요.';
+  if (c === 'started') return '이미 게임이 시작된 방이에요.';
+  if (/operation-not-allowed|admin-restricted/.test(c)) return '익명 로그인이 꺼져 있어요. Firebase의 Authentication에서 익명을 사용 설정해 주세요.';
+  if (/unauthorized-domain/.test(c)) return '이 주소가 Firebase의 승인된 도메인에 없어요. Authentication 설정에서 추가해 주세요.';
+  if (/permission-denied/.test(c)) return '권한이 없어요. Firestore 규칙을 게시했는지 확인해 주세요.';
+  if (/unavailable|network/.test(c)) return '연결이 불안정해요. 잠시 뒤 다시 시도해 주세요.';
+  return '문제가 생겼어요. (' + c + ')';
+}
+async function run(btn, errEl, fn){
+  btn.disabled = true;
+  if (errEl) errEl.textContent = '';
+  try { await fn(); }
+  catch (e) {
+    console.error(e);
+    if (errEl) errEl.textContent = errText(e); else say(errText(e));
+    btn.disabled = false;
+    return;
+  }
+  btn.disabled = false;
+}
+
+const nmOf = (r, i) => (r.players['p' + i] && r.players['p' + i].name) || (i ? '참가자' : '방장');
+const blankPoem = r => [...r.word].map(c => ({ s: c, t: '' }));
+const poemOf = (r, i) => (r.poems && r.poems['p' + i]) || blankPoem(r);
+const tiles = w => [...w].map((c, i) => `<span class="tile" style="--i:${i}">${esc(c)}</span>`).join('');
+
+const board = r => `
+  <div class="board" role="group" aria-label="점수판">
+    <div class="side s1"><span class="nm">${esc(nmOf(r, 0))}${S.me === 0 ? ' (나)' : ''}</span><span class="n">${r.wins[0]}</span></div>
+    <div class="mid"><span>라운드</span><span class="rn">${r.round}/${r.rounds}</span></div>
+    <div class="side s2"><span class="n">${r.wins[1]}</span><span class="nm">${esc(nmOf(r, 1))}${S.me === 1 ? ' (나)' : ''}</span></div>
+  </div>`;
+
+const poemCard = (lines, who, word, cls) => `
+  <article class="poem ${cls}">
+    <header class="poem-h"><span class="who">${esc(who)}</span><span class="wd">${esc(word)}</span></header>
+    <ol>${lines.map(l => l.t
+      ? `<li><mark>${esc(l.s)}</mark>${esc(l.t)}</li>`
+      : `<li class="empty"><mark>${esc(l.s)}</mark>(비워 둠)</li>`).join('')}</ol>
+  </article>`;
+
+function pickWord(used){
+  let pool = WORDS.filter(w => !(used || []).includes(w));
+  if (!pool.length) pool = WORDS.slice();
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ---------- 설정 안내 / 오류 화면 ---------- */
+function sSetup(){
+  put(`
+    <section class="stack">
+      <h1 tabindex="-1" data-focus>설정이 필요해요</h1>
+      <p class="lede">아직 Firebase 설정이 비어 있어요. 이 화면은 설정 전에 한 번만 보여요.</p>
+    </section>
+    <section class="card setup">
+      <h3>해야 할 일</h3>
+      <ol>
+        <li><code>README.md</code>의 1~4단계를 따라 Firebase 프로젝트를 만들어요.</li>
+        <li>복사한 <code>firebaseConfig</code> 값을 <code>index.html</code>의 맨 아래쪽 <code>firebaseConfig</code> 자리에 붙여넣어요.</li>
+        <li>저장하고 이 페이지를 새로고침해요.</li>
+      </ol>
+    </section>`);
+}
+function sFatal(msg){
+  put(`
+    <section class="stack">
+      <h1 tabindex="-1" data-focus>연결하지 못했어요</h1>
+      <p class="err" role="alert">${esc(msg)}</p>
+      <button class="btn btn-ink" id="retry" type="button">다시 시도</button>
+    </section>`);
+  $('#retry').onclick = () => location.reload();
+}
+
+/* ---------- 홈 ---------- */
+function sHome(msg){
+  S.code = ''; S.room = null; S.key = '';
+  const hash = normCode(location.hash.slice(1));
+  const savedCode = normCode(store.get(K_ROOM) || '');
+  let set = {}; try { set = JSON.parse(store.get(K_SET) || '{}') || {}; } catch (e) {}
+  const rounds = [1, 3, 5].includes(set.rounds) ? set.rounds : 3;
+  const secs = [30, 60, 90].includes(set.secs) ? set.secs : 60;
+  put(`
+    <section class="stack">
+      <p class="kicker">폰 두 대로 하는 실시간 대결</p>
+      <h1 tabindex="-1" data-focus>삼행시 대결</h1>
+      <p class="lede">방을 만들고 코드를 알려 주면, 상대가 자기 폰으로 들어와요. 둘이 동시에 쓰고 서로 점수를 줘요.</p>
+      <p class="err" id="hErr" role="alert">${msg ? esc(msg) : ''}</p>
+    </section>
+    <div class="card">
+      <div class="field">
+        <label for="nm">내 이름</label>
+        <input class="inp" id="nm" maxlength="8" placeholder="이름" autocomplete="off" value="${esc(store.get(K_NAME) || '')}">
+      </div>
+    </div>
+    <form id="mk" class="card" novalidate>
+      <h3>방 만들기</h3>
+      <fieldset>
+        <legend>몇 판 할까요</legend>
+        <div class="seg">${[1, 3, 5].map(n => `<input type="radio" name="rounds" id="rd${n}" value="${n}" ${rounds === n ? 'checked' : ''}><label for="rd${n}">${n}판</label>`).join('')}</div>
+      </fieldset>
+      <fieldset>
+        <legend>쓰는 시간</legend>
+        <div class="seg">${[30, 60, 90].map(n => `<input type="radio" name="secs" id="tm${n}" value="${n}" ${secs === n ? 'checked' : ''}><label for="tm${n}">${n}초</label>`).join('')}</div>
+      </fieldset>
+      <button class="btn btn-ink" type="submit">방 만들기</button>
+    </form>
+    <form id="jn" class="card" novalidate>
+      <h3>방 들어가기</h3>
+      <div class="field">
+        <label for="cd">방 코드 4자리</label>
+        <input class="inp codein" id="cd" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(hash)}">
+      </div>
+      <button class="btn btn-ink" type="submit">들어가기</button>
+    </form>
+    ${savedCode ? `<button class="btn btn-ghost" id="back" type="button">이전 방 <span class="code-inline">${esc(savedCode)}</span> 다시 들어가기</button>` : ''}
+    <section class="stack">
+      <p class="kicker">이런 시예요</p>
+      ${poemCard(SAMPLE, '예시', '삼행시', 'is-ink')}
+    </section>`);
+
+  const errEl = $('#hErr');
+  const nameOf = def => {
+    const v = $('#nm').value.trim().slice(0, 8);
+    if (v) store.set(K_NAME, v);
+    return v || def;
+  };
+  $('#mk').addEventListener('submit', e => {
+    e.preventDefault();
+    const r = +$('input[name=rounds]:checked').value, s = +$('input[name=secs]:checked').value;
+    store.set(K_SET, JSON.stringify({ rounds: r, secs: s }));
+    run(e.submitter || $('#mk button[type=submit]'), errEl, () => createRoom(nameOf('방장'), r, s));
+  });
+  $('#jn').addEventListener('submit', e => {
+    e.preventDefault();
+    const code = normCode($('#cd').value);
+    if (code.length !== 4) { errEl.textContent = '방 코드는 4자리예요.'; $('#cd').focus(); return; }
+    run(e.submitter || $('#jn button[type=submit]'), errEl, () => joinRoom(code, nameOf('참가자')));
+  });
+  $('#cd').addEventListener('input', e => { e.target.value = normCode(e.target.value); });
+  const back = $('#back');
+  if (back) back.onclick = () => run(back, errEl, () => joinRoom(savedCode, nameOf('참가자')));
+}
+
+/* ---------- 방 만들기 / 들어가기 ---------- */
+async function createRoom(name, rounds, secs){
+  for (let i = 0; i < 6; i++) {
+    let code = '';
+    for (let k = 0; k < 4; k++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    const ref = doc(db, 'rooms', code);
+    const snap = await getDoc(ref);
+    if (snap.exists()) continue;
+    await setDoc(ref, {
+      code, phase: 'lobby', players: { p0: { uid: S.uid, name } },
+      rounds, secs, round: 1, wins: [0, 0], pts: [0, 0], word: '', used: [],
+      poems: {}, rates: {}, hist: [],
+      createdAt: Timestamp.now(), expireAt: Timestamp.fromMillis(Date.now() + 24 * 3600 * 1000)
+    });
+    enterRoom(code);
+    return;
+  }
+  throw new Error('방 코드를 만들지 못했어요. 다시 시도해 주세요.');
+}
+
+async function joinRoom(code, name){
+  const ref = doc(db, 'rooms', code);
+  await runTransaction(db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) throw new Error('nf');
+    const d = s.data(), p = d.players;
+    if (p.p0.uid === S.uid || (p.p1 && p.p1.uid === S.uid)) return;
+    if (d.left != null) throw new Error('ended');
+    if (p.p1) throw new Error('full');
+    if (d.phase !== 'lobby') throw new Error('started');
+    if (name === p.p0.name) name += ' 2';
+    tx.update(ref, { 'players.p1': { uid: S.uid, name } });
+  });
+  enterRoom(code);
+}
+
+function enterRoom(code){
+  if (S.unsub) S.unsub();
+  S.code = code; S.key = ''; S.adv = ''; S.forced = ''; S.wsRound = 0;
+  S.beat = { v: null, at: Date.now() }; S.lastPhase = ''; S.lastTick = Date.now();
+  clearInterval(S.hb); S.hb = setInterval(heartbeat, BEAT_MS);
+  store.set(K_ROOM, code);
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  S.unsub = onSnapshot(roomRef(), snap => {
+    if (!snap.exists()) { leave('방이 사라졌어요.'); return; }
+    const r = snap.data(), p = r.players;
+    if (p.p0.uid !== S.uid && !(p.p1 && p.p1.uid === S.uid)) { leave('이 방의 참가자가 아니에요.'); return; }
+    S.room = r;
+    S.me = p.p0.uid === S.uid ? 0 : 1;
+    if (r.left === S.me) { leave('이미 나간 방이에요.'); return; }
+    trackBeat(r);
+    route();
+    hostWork();
+  }, err => {
+    console.error(err);
+    leave(errText(err));
+  });
+}
+
+/* ---------- 상대 이탈 감지 ---------- */
+const live = r => ['word', 'write', 'rate', 'result'].includes(r.phase) && r.players.p1 && r.left == null;
+function trackBeat(r){
+  const v = (r.beat && r.beat['p' + (1 - S.me)]) || null;
+  if (v !== S.beat.v || r.phase !== S.lastPhase) S.beat = { v, at: Date.now() };
+  S.lastPhase = r.phase;
+}
+function heartbeat(){
+  const r = S.room, now = Date.now();
+  const late = now - S.lastTick > BEAT_MS * 2;
+  S.lastTick = now;
+  if (!r || !live(r)) return;
+  if (late) { S.beat.at = now; return; }
+  updateDoc(roomRef(), { ['beat.p' + S.me]: now }).catch(() => {});
+  if (now - S.beat.at > GONE_MS) {
+    S.beat.at = now;
+    updateDoc(roomRef(), { left: 1 - S.me }).catch(() => {});
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { S.beat.at = Date.now(); S.lastTick = Date.now(); }
+});
+
+async function quitRoom(){
+  const r = S.room, code = S.code;
+  if (!r || !code) { leave(); return; }
+  if (S.unsub) S.unsub();
+  S.unsub = null;
+  const me = S.me, ref = doc(db, 'rooms', code);
+  try {
+    if (r.phase === 'lobby' && me === 1) await updateDoc(ref, { 'players.p1': deleteField() });
+    else if (r.left == null) await updateDoc(ref, { left: me });
+  } catch (e) { console.error(e); }
+  leave();
+}
+
+function leave(msg){
+  if (S.unsub) S.unsub();
+  S.unsub = null;
+  clearInterval(S.hb);
+  store.set(K_ROOM, '');
+  sHome(typeof msg === 'string' ? msg : '');
+}
+
+/* ---------- 화면 전환 ---------- */
+function viewKey(r){
+  const me = S.me;
+  if (r.left != null && r.phase !== 'final') return 'left';
+  switch (r.phase) {
+    case 'lobby': return r.left != null ? 'left' : 'lobby';
+    case 'word': return `word|${r.round}|${r.word}`;
+    case 'write': return `write|${r.round}|${r.poems && r.poems['p' + me] ? 1 : 0}`;
+    case 'rate': return `rate|${r.round}`;
+    case 'result': return `result|${r.round}`;
+    case 'final': return 'final|' + (r.left != null ? 1 : 0);
+    default: return r.phase;
+  }
+}
+
+function route(){
+  const r = S.room;
+  if (r.phase === 'write' && S.wsRound !== r.round) { S.wsRound = r.round; S.writeStart = Date.now(); }
+  const key = viewKey(r);
+  if (key !== S.key) {
+    S.key = key;
+    if (key === 'left') { sLeft(r); return; }
+    switch (r.phase) {
+      case 'lobby': sLobby(r); break;
+      case 'word': sWord(r); break;
+      case 'write': (r.poems && r.poems['p' + S.me]) ? sWait(r) : sWrite(r); break;
+      case 'rate': sRate(r); break;
+      case 'result': sResult(r); break;
+      case 'final': sFinal(r); break;
+    }
+  }
+  patch(r);
+}
+
+function patch(r){
+  const o = 1 - S.me;
+  if (r.left != null && r.phase !== 'final') return;
+  if (r.phase === 'lobby') patchLobby(r);
+  else if (r.phase === 'write') {
+    const done = !!(r.poems && r.poems['p' + o]);
+    setIf($('#opp'), esc(nmOf(r, o)) + (done ? ' 제출 완료' : ' 쓰는 중'));
+  } else if (r.phase === 'rate') {
+    drawRate(r);
+    const done = r.rates && r.rates['p' + o] != null;
+    setIf($('#opp'), esc(nmOf(r, o)) + (done ? ' 점수를 골랐어요' : ' 점수를 고르는 중'));
+  }
+}
+
+/* ---------- 방장 전용 진행 ---------- */
+function hostWork(){
+  const r = S.room;
+  if (!r || S.me !== 0 || r.left != null) return;
+  const k = r.phase + '|' + r.round;
+  if (r.phase === 'write' && r.poems && r.poems.p0 && r.poems.p1) {
+    if (S.adv === k) return;
+    S.adv = k;
+    updateDoc(roomRef(), { phase: 'rate' }).catch(() => { S.adv = ''; });
+  } else if (r.phase === 'rate' && r.rates && r.rates.p0 != null && r.rates.p1 != null) {
+    if (S.adv === k) return;
+    S.adv = k;
+    settle(r).catch(() => { S.adv = ''; });
+  }
+}
+
+async function settle(r){
+  const got = [r.rates.p1, r.rates.p0];
+  const win = got[0] > got[1] ? 0 : got[1] > got[0] ? 1 : -1;
+  const wins = r.wins.slice();
+  if (win >= 0) wins[win]++;
+  const pts = [r.pts[0] + got[0], r.pts[1] + got[1]];
+  const h = { word: r.word, poems: { p0: poemOf(r, 0), p1: poemOf(r, 1) }, got, win };
+  await updateDoc(roomRef(), { phase: 'result', wins, pts, hist: [...r.hist, h] });
+}
+
+setInterval(() => {
+  const r = S.room;
+  if (!r || S.me !== 0 || r.left != null || r.phase !== 'write' || !S.writeStart) return;
+  if (Date.now() < S.writeStart + (r.secs + 10) * 1000) return;
+  const fk = 'force|' + r.round;
+  if (S.forced === fk) return;
+  S.forced = fk;
+  const upd = { phase: 'rate' };
+  if (!r.poems || !r.poems.p0) upd['poems.p0'] = blankPoem(r);
+  if (!r.poems || !r.poems.p1) upd['poems.p1'] = blankPoem(r);
+  updateDoc(roomRef(), upd).catch(() => { S.forced = ''; });
+}, 1000);
+
+/* ---------- 상대가 나감 ---------- */
+function sLeft(r){
+  put(`
+    <section class="stack">
+      <p class="kicker">게임 종료</p>
+      <h1 tabindex="-1" data-focus>상대가 나갔어요</h1>
+      <p class="lede">${esc(nmOf(r, 1 - S.me))}님이 방을 나가서 게임이 끝났어요.</p>
+    </section>
+    <button class="btn btn-ink" id="lhome" type="button">처음으로</button>`);
+  $('#lhome').onclick = () => leave();
+}
+
+/* ---------- 로비 ---------- */
+function sLobby(r){
+  put(`
+    <section class="stack">
+      <p class="kicker">방 코드</p>
+      <div class="roomcode" aria-label="방 코드 ${esc(r.code)}">${esc(r.code)}</div>
+      <p class="hint">상대에게 이 코드를 알려 주거나 링크를 보내세요. 상대는 같은 사이트에서 코드를 넣으면 들어와요.</p>
+      <button class="btn btn-ghost" id="lk" type="button">초대 링크 복사</button>
+    </section>
+    <section class="plist" id="pl" aria-live="polite"></section>
+    <section class="stack" id="act"></section>`);
+  $('#lk').onclick = async () => {
+    const url = location.href.split('#')[0] + '#' + r.code;
+    try { await navigator.clipboard.writeText(url); say('링크를 복사했어요.'); }
+    catch (e) { say('복사하지 못했어요. 코드 ' + r.code + '를 직접 알려 주세요.'); }
+  };
+  $('#act').onclick = e => {
+    if (e.target.closest('[data-start]')) {
+      const b = e.target.closest('[data-start]');
+      run(b, null, startGame);
+    }
+  };
+}
+
+function patchLobby(r){
+  const p1 = r.players.p1;
+  setIf($('#pl'), `
+    <div class="pl is-p1"><i class="dot"></i><span class="who">${esc(nmOf(r, 0))}${S.me === 0 ? ' (나)' : ''}</span><span class="tag">방장</span></div>
+    ${p1
+      ? `<div class="pl is-p2"><i class="dot"></i><span class="who">${esc(nmOf(r, 1))}${S.me === 1 ? ' (나)' : ''}</span><span class="tag">참가자</span></div>`
+      : `<div class="pl wait"><i class="dot"></i><span class="who">상대를 기다리는 중</span></div>`}`);
+  let act;
+  if (S.me === 0) act = `<button class="btn btn-ink" type="button" data-start ${p1 ? '' : 'disabled'}>게임 시작</button>` + (p1 ? '' : `<p class="hint">상대가 들어오면 시작할 수 있어요.</p>`);
+  else act = `<p class="hint">방장이 게임을 시작하길 기다려요.</p>`;
+  setIf($('#act'), act);
+}
+
+async function startGame(){
+  const r = S.room, w = pickWord(r.used);
+  S.adv = ''; S.forced = ''; S.wsRound = 0;
+  await updateDoc(roomRef(), {
+    phase: 'word', round: 1, wins: [0, 0], pts: [0, 0], hist: [],
+    word: w, used: [w], poems: {}, rates: {}
+  });
+}
+
+/* ---------- 제시어 ---------- */
+function sWord(r){
+  const host = S.me === 0;
+  put(`${board(r)}
+    <section class="stack">
+      <p class="kicker">${r.round}번째 제시어</p>
+      <div class="tiles" role="img" aria-label="제시어 ${esc(r.word)}">${tiles(r.word)}</div>
+      <p class="hint">줄마다 이 글자로 시작해요. 둘 다 동시에 써요. 제한시간은 ${r.secs}초예요.</p>
+    </section>
+    ${host ? `
+    <section class="stack">
+      <button class="btn btn-ink" id="go" type="button">쓰기 시작</button>
+      <div class="two">
+        <button class="btn btn-ghost" id="re" type="button">다른 단어</button>
+        <button class="btn btn-ghost" id="own" type="button" aria-expanded="false" aria-controls="ownf">직접 입력</button>
+      </div>
+      <form id="ownf" class="card" hidden novalidate>
+        <div class="field">
+          <label for="ow">세 글자 단어 (친구 이름도 좋아요)</label>
+          <input class="inp" id="ow" maxlength="3" placeholder="예: 김치국" autocomplete="off">
+        </div>
+        <p class="err" id="owe" role="alert"></p>
+        <button class="btn btn-ink" type="submit">이 단어로 정하기</button>
+      </form>
+    </section>` : `<p class="hint">방장이 시작하길 기다려요. 단어를 바꾸면 화면에 바로 반영돼요.</p>`}`);
+  if (!host) return;
+  $('#go').onclick = e => run(e.currentTarget, null, () => updateDoc(roomRef(), { phase: 'write', poems: {}, rates: {} }));
+  $('#re').onclick = e => run(e.currentTarget, null, () => {
+    const w = pickWord(S.room.used);
+    return updateDoc(roomRef(), { word: w, used: arrayUnion(w) });
+  });
+  $('#own').onclick = () => {
+    const f = $('#ownf');
+    f.hidden = !f.hidden;
+    $('#own').setAttribute('aria-expanded', String(!f.hidden));
+    if (!f.hidden) $('#ow').focus();
+  };
+  $('#ownf').onsubmit = e => {
+    e.preventDefault();
+    const v = $('#ow').value.trim();
+    if (!/^[가-힣]{3}$/.test(v)) { $('#owe').textContent = '한글 세 글자만 쓸 수 있어요.'; return; }
+    run(e.submitter || $('#ownf button[type=submit]'), $('#owe'), () => updateDoc(roomRef(), { word: v, used: arrayUnion(v) }));
+  };
+}
+
+/* ---------- 쓰기 ---------- */
+function sWrite(r){
+  const syl = [...r.word], me = S.me;
+  put(`
+    <section class="write is-p${me + 1} stack" id="wr">
+      <div class="whead">
+        <span class="chip">${esc(nmOf(r, me))}</span>
+        <span class="secs" id="secs" role="timer" aria-live="off">${r.secs}</span>
+      </div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <p class="hint" id="opp"></p>
+      <form id="wf" class="stack" autocomplete="off" novalidate>
+        ${syl.map((c, k) => `
+          <div class="row">
+            <span class="tile tile-s" aria-hidden="true">${esc(c)}</span>
+            <input class="inp" id="l${k}" type="text" maxlength="36" enterkeyhint="${k < 2 ? 'next' : 'done'}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="이어서 써요" aria-label="${k + 1}번째 줄, ${esc(c)} 뒤에 이어 쓰기">
+          </div>`).join('')}
+        <p class="err" id="err" role="alert"></p>
+        <button class="btn btn-pc" type="submit">다 썼어요</button>
+      </form>
+    </section>`);
+
+  const total = r.secs * 1000, end = Date.now() + total;
+  const secsEl = $('#secs'), fill = $('#fill'), wr = $('#wr');
+  let done = false;
+  const read = () => syl.map((c, k) => ({ s: c, t: $('#l' + k).value.trim() }));
+  const finish = auto => {
+    if (done) return;
+    if (!S.room || S.room.phase !== 'write') return;
+    const lines = read();
+    if (!auto) {
+      const miss = lines.findIndex(l => !l.t);
+      if (miss >= 0) {
+        $('#err').textContent = '세 줄을 모두 채워 주세요.';
+        $('#l' + miss).focus();
+        return;
+      }
+    }
+    done = true;
+    clearInterval(S.timer);
+    updateDoc(roomRef(), { ['poems.p' + me]: lines }).catch(e => {
+      console.error(e); say(errText(e));
+    });
+  };
+  const tick = () => {
+    const left = Math.max(0, end - Date.now());
+    secsEl.textContent = Math.ceil(left / 1000);
+    fill.style.transform = `scaleX(${left / total})`;
+    wr.classList.toggle('low', left <= 10000);
+    if (left <= 0) finish(true);
+  };
+  S.timer = setInterval(tick, 100);
+
+  syl.forEach((c, k) => {
+    const inp = $('#l' + k);
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+      e.preventDefault();
+      if (k < 2) $('#l' + (k + 1)).focus(); else finish(false);
+    });
+    inp.addEventListener('input', () => { $('#err').textContent = ''; });
+  });
+  $('#wf').addEventListener('submit', e => { e.preventDefault(); finish(false); });
+  $('#l0').focus();
+}
+
+function sWait(r){
+  put(`
+    <section class="stack is-p${S.me + 1}">
+      <p class="kicker">제출 완료</p>
+      <h2 tabindex="-1" data-focus>상대를 기다려요</h2>
+      <p class="hint" id="opp"></p>
+      <p class="hint">둘 다 내면 시가 함께 공개돼요. 상대가 시간 안에 못 내면 잠시 뒤 자동으로 넘어가요.</p>
+    </section>`);
+}
+
+/* ---------- 공개와 점수 ---------- */
+function sRate(r){
+  const o = 1 - S.me;
+  put(`${board(r)}
+    <h2 tabindex="-1" data-focus>시 공개</h2>
+    <div class="stack">
+      ${poemCard(poemOf(r, 0), nmOf(r, 0), r.word, 'is-p1')}
+      ${poemCard(poemOf(r, 1), nmOf(r, 1), r.word, 'is-p2')}
+    </div>
+    <p class="kicker">${esc(nmOf(r, o))}의 시에 점수를 주세요. 둘 다 고르면 결과가 나와요.</p>
+    <div class="rate is-p${S.me + 1}" id="rt"></div>
+    <p class="hint" id="opp"></p>`);
+  $('#rt').onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    S.focusRate = true;
+    if (b.dataset.n) updateDoc(roomRef(), { ['rates.p' + S.me]: +b.dataset.n }).catch(err => say(errText(err)));
+    else if (b.hasAttribute('data-undo')) updateDoc(roomRef(), { ['rates.p' + S.me]: deleteField() }).catch(err => say(errText(err)));
+  };
+}
+
+function drawRate(r){
+  const box = $('#rt');
+  if (!box) return;
+  const o = 1 - S.me, v = r.rates ? r.rates['p' + S.me] : null;
+  const html = v == null
+    ? `<p class="rl"><i class="dot"></i>${esc(nmOf(r, o))}의 시는 몇 점?</p>
+       <div class="stars" role="group" aria-label="${esc(nmOf(r, o))}의 시 점수">${LABELS.map((lab, n) =>
+         `<button type="button" class="sc" data-n="${n + 1}" aria-label="${n + 1}점, ${lab}"><span class="num">${n + 1}</span><span class="lab">${lab}</span></button>`).join('')}</div>`
+    : `<div class="done"><span><i class="dot"></i>점수를 골랐어요</span><button type="button" class="btn btn-ghost btn-s" data-undo>바꾸기</button></div>`;
+  if (setIf(box, html) && S.focusRate) {
+    S.focusRate = false;
+    const b = box.querySelector('button');
+    if (b) b.focus();
+  }
+}
+
+/* ---------- 라운드 결과 ---------- */
+function sResult(r){
+  const h = r.hist[r.hist.length - 1];
+  const last = r.round >= r.rounds;
+  const host = S.me === 0;
+  const verdict = h.win < 0 ? '무승부' : `${nmOf(r, h.win)} 승!`;
+  put(`${board(r)}
+    <section class="stack">
+      <p class="kicker">${r.round}번째 결과</p>
+      <h2 class="verdict" tabindex="-1" data-focus>${esc(verdict)}</h2>
+    </section>
+    <div class="scores">
+      ${[0, 1].map(i => `
+        <div class="sbox is-p${i + 1} ${h.win === i ? 'win' : ''}">
+          <span class="sn">${esc(nmOf(r, i))}</span>
+          <span class="big">${h.got[i]}</span>
+          <span class="sl">${h.win === i ? '이번 판 승리' : '받은 점수'}</span>
+        </div>`).join('')}
+    </div>
+    ${host
+      ? `<button class="btn btn-ink" id="next" type="button">${last ? '최종 결과 보기' : '다음 판'}</button>`
+      : `<p class="hint">방장이 ${last ? '최종 결과를' : '다음 판을'} 열 때까지 기다려요.</p>`}`);
+  if (host) $('#next').onclick = e => run(e.currentTarget, null, () => {
+    const cur = S.room;
+    if (last) return updateDoc(roomRef(), { phase: 'final' });
+    const w = pickWord(cur.used);
+    return updateDoc(roomRef(), { phase: 'word', round: cur.round + 1, word: w, used: arrayUnion(w), poems: {}, rates: {} });
+  });
+}
+
+/* ---------- 최종 ---------- */
+function composeText(r){
+  const out = [`삼행시 대결 ${nmOf(r, 0)} ${r.wins[0]} : ${r.wins[1]} ${nmOf(r, 1)}`];
+  r.hist.forEach((h, n) => {
+    out.push('', `[${n + 1}번째] 제시어 ${h.word}`);
+    [0, 1].forEach(i => {
+      out.push(`${nmOf(r, i)} (${h.got[i]}점)`);
+      h.poems['p' + i].forEach(l => out.push(l.t ? l.s + l.t : l.s + ' (비워 둠)'));
+    });
+  });
+  return out.join('\n');
+}
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+
+function sFinal(r){
+  const host = S.me === 0;
+  const [a, b] = r.wins, [pa, pb] = r.pts;
+  const champ = a !== b ? (a > b ? 0 : 1) : pa !== pb ? (pa > pb ? 0 : 1) : -1;
+  const why = a !== b ? '' : (champ >= 0 ? '판 승수가 같아서 점수 합계로 가렸어요.' : '판 승수와 점수 합계가 모두 같아요.');
+  const head = champ < 0 ? '무승부' : `${nmOf(r, champ)} 우승!`;
+  put(`${board(r)}
+    <section class="stack">
+      <p class="kicker">최종 결과</p>
+      <h2 class="verdict" tabindex="-1" data-focus>${esc(head)}</h2>
+      <p class="hint">판 승수 ${a} : ${b}, 점수 합계 ${pa} : ${pb}. ${why}</p>
+    </section>
+    <div class="stack">
+      ${r.hist.map((h, n) => `
+        <section class="hround stack">
+          <h3>${n + 1}번째 · ${esc(h.word)}<span>${h.win < 0 ? '무승부' : esc(nmOf(r, h.win)) + ' 승'}</span></h3>
+          ${poemCard(h.poems.p0, nmOf(r, 0), h.word, 'is-p1')}
+          ${poemCard(h.poems.p1, nmOf(r, 1), h.word, 'is-p2')}
+          <p class="hint">받은 점수 ${h.got[0]} : ${h.got[1]}</p>
+        </section>`).join('')}
+    </div>
+    <section class="stack">
+      <button class="btn btn-ink" id="cp" type="button">시 전체 복사</button>
+      <textarea class="inp" id="cpt" rows="8" readonly hidden aria-label="복사할 시 전체"></textarea>
+      <div class="two">
+        ${host && r.left == null
+          ? `<button class="btn btn-ghost" id="again" type="button">같은 설정으로 다시</button>`
+          : `<p class="hint">${r.left != null ? '상대가 나가서 다시 할 수 없어요.' : '방장이 다시 시작할 수 있어요.'}</p>`}
+        <button class="btn btn-ghost" id="home" type="button">방에서 나가기</button>
+      </div>
+    </section>`);
+  $('#cp').onclick = async () => {
+    const t = composeText(S.room);
+    if (await copyText(t)) { say('복사했어요.'); return; }
+    const ta = $('#cpt');
+    ta.hidden = false; ta.value = t; ta.focus(); ta.select();
+    say('복사하지 못했어요. 아래 글을 직접 복사해 주세요.');
+  };
+  if (host && r.left == null) $('#again').onclick = e => run(e.currentTarget, null, startGame);
+  $('#home').onclick = () => quitRoom();
+}
+
+/* ---------- 나가기 / 연결 상태 ---------- */
+quitBtn.onclick = () => { quitBox.hidden = !quitBox.hidden; };
+$('#quitYes').onclick = () => quitRoom();
+$('#quitNo').onclick = () => { quitBox.hidden = true; };
+window.addEventListener('offline', () => say('인터넷 연결이 끊겼어요.'));
+window.addEventListener('online', () => say('다시 연결됐어요.'));
+
+/* ---------- 시작 ---------- */
+(async () => {
+  if (!configured) { sSetup(); return; }
+  put(`<p class="lede" tabindex="-1" data-focus>연결하는 중…</p>`);
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    auth = getAuth(fbApp);
+    db = getFirestore(fbApp);
+    const cred = await signInAnonymously(auth);
+    S.uid = cred.user.uid;
+  } catch (e) {
+    console.error(e);
+    sFatal(errText(e));
+    return;
+  }
+  sHome();
+})();
+</script>
+</body>
+</html>
